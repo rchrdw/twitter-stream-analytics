@@ -50,7 +50,7 @@ const streamConnect = async ({ streamUrl, ...auth }, streamHandler) => {
         streamHandler(json.data);
       } catch (e) {
         // Keep alive signal received. Do nothing.
-        if (e.message === 'Unexpected end of JSON input') return;
+        if (e instanceof SyntaxError && e.message === 'Unexpected end of JSON input') return;
 
         // streamHandler threw an error, log and continue
         console.warn(e);
