@@ -45,14 +45,15 @@ const streamConnect = async ({ streamUrl, ...auth }, streamHandler) => {
   // connect and listen to the stream
   const connect = () => {
     const stream = got.stream(streamUrl, streamOptions).on('data', (data) => {
-      let json;
       try {
-        json = JSON.parse(data);
-      } catch {
-        // Keep alive signal received. Do nothing.
-      }
-      if (json) {
+        const json = JSON.parse(data);
         streamHandler(json.data);
+      } catch (e) {
+        // Keep alive signal received. Do nothing.
+        if (e.message === 'Unexpected end of JSON input') return;
+
+        // streamHandler threw an error, log and continue
+        console.warn(e);
       }
     }).on('error', (error) => {
       console.warn(error);
