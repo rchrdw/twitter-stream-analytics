@@ -17,7 +17,7 @@ const bucketSort = (map, k) => {
 
   const res = [];
 
-  for (let i = map.size; i >= 0 && k > 0; i -= 1) {
+  for (let i = buckets.length; i >= 0 && k > 0; i -= 1) {
     if (buckets[i]) {
       // eslint-disable-next-line no-param-reassign
       k -= buckets[i].length;

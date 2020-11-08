@@ -4,7 +4,9 @@
  * Tracks:
  *  * Total tweets received
  *  * Tweets recieved a 1 second sliding window
- *  * Total tweets received in a 1 minute and 1 hour using a circular buffer hopping window
+ *  * Average number of tweets per seconds over the last minute
+ *  * Total tweets received in a 1 minute and 1 hour window using a circular buffer
+ *  * Average number of tweets per minute over the last 10 minutes
  *  * Top k emojis in tweets
  *  * Percentage of tweets containing emojis
  *  * Top k hashtags using count min sketch
@@ -35,23 +37,27 @@ class StreamHandler {
     this.tweetPhotoCount = 0;
     this.perSecond = new SlidingWindow(1 * 1000);
     this.perMinute = new CircularBuffer(60);
+    this.per10Minutes = new CircularBuffer(10);
     this.perHour = new CircularBuffer(60);
     // TopKBloom returns top k-1 values
     this.topKHashes = new TopKBloom(k + 1, 0.001, 0.99);
     this.topKEmojis = new TopK(k);
     this.topKDomains = new TopKBloom(k + 1, 0.001, 0.99);
     this.perMinuteInterval = null;
+    this.per10MinuteInterval = null;
     this.perHourInterval = null;
   }
 
   process(data) {
-    // count total, per second (sliding window),
-    // per minute (hopping window), and per hour (hopping window)
+    // count total, per second (sliding window), per minute, per 10 minutes, and per hour
     this.total += 1;
     this.perSecond.add();
     this.perMinuteInterval = this.perMinuteInterval ?? setInterval(() => {
       this.perMinute.add(this.perSecond.total());
     }, 1000);
+    this.per10MinuteInterval = this.per10MinuteInterval ?? setInterval(() => {
+      this.per10Minutes.add(this.perMinute.total());
+    }, 60 * 1000);
     this.perHourInterval = this.perHourInterval ?? setInterval(() => {
       this.perHour.add(this.perMinute.total());
     }, 60 * 1000);
@@ -91,7 +97,9 @@ class StreamHandler {
     return {
       total: this.total,
       perSecond: this.perSecond.total(),
+      perSecondAvg: this.perMinute.total() / 60,
       perMinute: this.perMinute.total(),
+      perMinuteAvg: this.per10Minutes.total() / 10,
       perHour: this.perHour.total(),
       topHashes: this.topKHashes.values(),
       topDomains: this.topKDomains.values(),
