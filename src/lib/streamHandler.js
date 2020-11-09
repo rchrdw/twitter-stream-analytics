@@ -43,22 +43,19 @@ class StreamHandler {
     this.topKHashes = new TopKBloom(k + 1, 0.001, 0.99);
     this.topKEmojis = new TopK(k);
     this.topKDomains = new TopKBloom(k + 1, 0.001, 0.99);
-    this.perMinuteInterval = null;
-    this.per10MinuteInterval = null;
-    this.perHourInterval = null;
+    this.secondInterval = null;
+    this.minuteInterval = null;
   }
 
   process(data) {
     // count total, per second (sliding window), per minute, per 10 minutes, and per hour
     this.total += 1;
     this.perSecond.add();
-    this.perMinuteInterval = this.perMinuteInterval ?? setInterval(() => {
+    this.secondInterval = this.secondInterval ?? setInterval(() => {
       this.perMinute.add(this.perSecond.total());
     }, 1000);
-    this.per10MinuteInterval = this.per10MinuteInterval ?? setInterval(() => {
+    this.minuteInterval = this.minuteInterval ?? setInterval(() => {
       this.per10Minutes.add(this.perMinute.total());
-    }, 60 * 1000);
-    this.perHourInterval = this.perHourInterval ?? setInterval(() => {
       this.perHour.add(this.perMinute.total());
     }, 60 * 1000);
 
